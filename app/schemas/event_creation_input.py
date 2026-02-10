@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from app.constants import ErrorLevel
 
 
-class EventCreate(BaseModel):
+class EventCreationInput(BaseModel):
     occurred_at: datetime
     level: ErrorLevel
     message: str

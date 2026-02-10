@@ -1,0 +1,31 @@
+{
+  "id": 5,
+  "name": "abvkkq",
+  "ingest_key": "5e14c585a527ce48060e649c334081dd",
+  "created_at": "2026-02-10T15:07:58.112637Z"
+}
+
+
+Ingest keys are only used for event ingestion from client apps. Read endpoints are separate and would normally be protected by user authentication.
+
+dodac logging
+
+{
+  "occurred_at": "2026-02-09T12:34:56Z",
+  "level": "ERROR",
+  "message": "TypeError: Cannot read property 'x' of undefined",
+  "stack": {
+    "frames": [
+      {
+        "file": "UserService.js",
+        "line": 45,
+        "function": "getUser"
+      }
+    ]
+  },
+  "tags": {
+    "env": "prod",
+    "platform": "web",
+    "version": "1.2.3"
+  }
+}
