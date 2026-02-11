@@ -28,7 +28,7 @@ class Event(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     level: Mapped[ErrorLevel] = mapped_column(
-        sql_Enum(ErrorLevel, name="level", create_type=False),
+        sql_Enum(ErrorLevel, name="error_lvl", create_type=False),
         nullable=False,
     )
     message: Mapped[str] = mapped_column(String(255), nullable=False)

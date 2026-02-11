@@ -1,0 +1,2 @@
+class IngestForbiddenError(Exception):
+    pass

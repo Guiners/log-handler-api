@@ -7,3 +7,8 @@ class ErrorLevel(str, Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
+
+
+class TimeEnum(str, Enum):
+    HOUR = "hour"
+    DAY = "day"

@@ -7,14 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from app.db.database import get_db
-from app.schemas.application_creation_response import ApplicationCreationResponse
+from app.routers.event_router import event_router
+from app.routers.stats_router import status_router
+from app.schemas.application_creation_response import \
+    ApplicationCreationResponse
 from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.services.db_menager import DataBaseManager
-from app.routers.event_router import event_router
-
 
 app_router = APIRouter(prefix="/apps", tags=["Apps"])
+app_router.include_router(status_router)
 app_router.include_router(event_router)
 
 

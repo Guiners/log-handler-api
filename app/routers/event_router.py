@@ -3,21 +3,24 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from annotated_types import Gt, MinLen, Lt, Le
-from fastapi import APIRouter, Depends, FastAPI, Request, status, Header
+from annotated_types import Ge, Gt, Le, Lt, MinLen
+from fastapi import APIRouter, Depends, FastAPI, Header, Request, status
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from app.constants import ErrorLevel
 from app.db.database import get_db
-from app.schemas.application_creation_response import ApplicationCreationResponse
+from app.schemas.application_creation_response import \
+    ApplicationCreationResponse
 from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.schemas.event_creation_input import EventCreationInput
+from app.schemas.event_creation_output import EventCreationOutput
 from app.schemas.event_list import EventList
 from app.schemas.event_read import EventRead
 from app.services.db_menager import DataBaseManager
+from app.tools.custom_exceptions import IngestForbiddenError
 
 event_router = APIRouter(tags=["Events"])
 
@@ -31,13 +34,12 @@ event_router = APIRouter(tags=["Events"])
 async def get_events_by_application_id(
     app_id: int,
     limit: Annotated[int, Gt(0), Le(50)],
-    offset: Annotated[int, Gt(0)],
+    offset: Annotated[int, Ge(0)],
     level: ErrorLevel | None = None,
     since: datetime | None = None,
     until: datetime | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # todo test it
     try:
         events = await DataBaseManager(db).read_events_by_application_id(
             app_id, limit, offset, level, since, until
@@ -56,9 +58,9 @@ async def get_events_by_application_id(
 
 @event_router.post(
     "/{app_id}/events",
-    response_model=EventList,
+    response_model=EventCreationOutput,
     response_model_exclude_none=True,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_event(
     app_id: int,
@@ -67,7 +69,12 @@ async def create_event(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        event = await DataBaseManager(db).create_event(app_id, payload, ingest_key)
+        return await DataBaseManager(db).create_event(app_id, payload, ingest_key)
 
-    except IntegrityError:
-        ...
+    except IngestForbiddenError:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content=ErrorResponse(
+                error="ERROR", message="Invalid application or ingest key"
+            ).model_dump(),
+        )
