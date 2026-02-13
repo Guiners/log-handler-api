@@ -19,7 +19,6 @@ from app.schemas.event_read import EventRead
 from app.services.db_menager import DataBaseManager
 from app.tools.custom_exceptions import IngestForbiddenError
 
-
 event_router = APIRouter(tags=["Events"])
 
 

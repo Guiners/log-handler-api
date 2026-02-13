@@ -14,7 +14,6 @@ from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.services.db_menager import DataBaseManager
 
-
 app_router = APIRouter(prefix="/apps", tags=["Apps"])
 app_router.include_router(status_router)
 app_router.include_router(event_router)

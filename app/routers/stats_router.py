@@ -16,7 +16,6 @@ from app.schemas.timeseries_output import Series, TimeseriesOutput
 from app.schemas.top_messages_output import TopMessageItem, TopMessagesOutput
 from app.services.db_menager import DataBaseManager
 
-
 status_router = APIRouter(tags=["Status"])
 
 

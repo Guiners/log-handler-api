@@ -75,10 +75,10 @@ class DataBaseManager:
             where_conditions.append(Event.level == level)
 
         if since:
-            where_conditions.append(Event.received_at >= since)
+            where_conditions.append(Event.occurred_at >= since)
 
         if until:
-            where_conditions.append(Event.received_at <= until)
+            where_conditions.append(Event.occurred_at <= until)
 
         return where_conditions
 
@@ -113,7 +113,7 @@ class DataBaseManager:
             .where(*where_conditions)
             .limit(limit)
             .offset(offset)
-            .order_by(Event.received_at.desc())
+            .order_by(Event.occurred_at.desc())
         )
 
         results = await self.db.execute(stmt)
@@ -199,7 +199,8 @@ class DataBaseManager:
         where_conditions = self._create_event_where_condition(
             app_id, since, until, level
         )
-        bucket_expr = func.date_trunc(interval.value, Event.received_at).label(
+
+        bucket_expr = func.date_trunc(interval.value, Event.occurred_at).label(
             "bucket_start"
         )
 
@@ -271,11 +272,11 @@ class DataBaseManager:
             select(
                 Event.message.label("message"),
                 func.count(Event.id).label("count"),
-                func.max(Event.received_at).label("last_seen"),
+                func.max(Event.occurred_at).label("last_seen"),
             )
             .where(*where_conditions)
             .group_by(Event.message)
-            .order_by(func.count(Event.id).desc(), func.max(Event.received_at).desc())
+            .order_by(func.count(Event.id).desc(), func.max(Event.occurred_at).desc())
             .limit(limit)
         )
 
