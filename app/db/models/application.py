@@ -12,6 +12,12 @@ if typing.TYPE_CHECKING:
 
 
 class Application(Base):
+    """Represents a client application that sends error events to the system.
+
+    Stores basic metadata and ingest credentials. One application can have many
+    associated events.
+    """
+
     __tablename__ = "application"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)

@@ -16,7 +16,14 @@ if typing.TYPE_CHECKING:
 
 
 class Event(Base):
+    """Represents a single error or log event sent by an application.
+
+    Stores timestamps, severity level, message, and optional structured data
+    such as stack trace and tags.
+    """
+
     __tablename__ = "event"
+
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     application_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("application.id", ondelete="CASCADE"), nullable=False

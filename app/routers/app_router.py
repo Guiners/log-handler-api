@@ -9,8 +9,7 @@ from starlette.responses import JSONResponse
 from app.db.database import get_db
 from app.routers.event_router import event_router
 from app.routers.stats_router import status_router
-from app.schemas.application_creation_response import \
-    ApplicationCreationResponse
+from app.schemas.application_creation_response import ApplicationCreationResponse
 from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.services.db_menager import DataBaseManager

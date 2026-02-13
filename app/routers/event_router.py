@@ -11,8 +11,7 @@ from starlette.responses import JSONResponse
 
 from app.constants import ErrorLevel
 from app.db.database import get_db
-from app.schemas.application_creation_response import \
-    ApplicationCreationResponse
+from app.schemas.application_creation_response import ApplicationCreationResponse
 from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.schemas.event_creation_input import EventCreationInput
