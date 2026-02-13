@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 
 class ApplicationRead(BaseModel):
+    """Response schema for reading an application."""
+
     id: int
     name: str
     created_at: datetime

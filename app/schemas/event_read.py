@@ -9,6 +9,8 @@ from app.constants import ErrorLevel
 
 
 class EventRead(BaseModel):
+    """Response schema for reading a single event."""
+
     id: int
     application_id: int
     occurred_at: datetime

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import datetime
-from typing import Any, List
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,29 +16,39 @@ from app.tools.logger import logger
 
 
 class DataBaseManager:
-    """
-    Utility class for performing dynamic DDL (Data Definition Language)
-    operations on a PostgreSQL database using SQLAlchemy AsyncSession.
-
-    Supports adding, removing, renaming, and altering table columns,
-    as well as creating, deleting, and truncating entire tables.
-    """
+    """Database access layer for application and event operations."""
 
     def __init__(self, db: AsyncSession):
-        """
-        Initialize the database manager.
+        """Create a new database manager.
 
         Args:
-            db (AsyncSession): The SQLAlchemy asynchronous session.
+            db: SQLAlchemy async session.
         """
         self.db = db
 
-    async def _read_by_id(self, model, obj_id: int):
+    async def _read_by_id(self, model: Any, obj_id: int) -> Any | None:
+        """Read a single row by primary key.
+
+        Args:
+            model: SQLAlchemy mapped model class.
+            obj_id: Primary key value.
+
+        Returns:
+            ORM instance if found, otherwise None.
+        """
         stmt = select(model).where(model.id == obj_id)
         results = await self.db.execute(stmt)
         return results.scalar_one_or_none()
 
-    async def read_app_by_id(self, app_id: int):
+    async def read_app_by_id(self, app_id: int) -> Application | None:
+        """Read an application by id.
+
+        Args:
+            app_id: Application identifier.
+
+        Returns:
+            Application instance if found, otherwise None.
+        """
         return await self._read_by_id(Application, app_id)
 
     @staticmethod
@@ -47,8 +57,19 @@ class DataBaseManager:
         since: datetime | None,
         until: datetime | None,
         level: ErrorLevel | None,
-    ):
-        where_conditions = [Event.application_id == app_id]
+    ) -> list[Any]:
+        """Build WHERE conditions for event queries.
+
+        Args:
+            app_id: Application identifier.
+            since: Optional lower bound for received time.
+            until: Optional upper bound for received time.
+            level: Optional error level filter.
+
+        Returns:
+            List of SQLAlchemy boolean expressions for WHERE clause.
+        """
+        where_conditions: list[Any] = [Event.application_id == app_id]
 
         if level:
             where_conditions.append(Event.level == level)
@@ -70,7 +91,19 @@ class DataBaseManager:
         since: datetime | None = None,
         until: datetime | None = None,
     ) -> list[Event]:
+        """Read paginated events for an application.
 
+        Args:
+            app_id: Application identifier.
+            limit: Maximum number of rows to return.
+            offset: Pagination offset.
+            level: Optional error level filter.
+            since: Optional lower bound for received time.
+            until: Optional upper bound for received time.
+
+        Returns:
+            List of event ORM instances.
+        """
         where_conditions = self._create_event_where_condition(
             app_id, since, until, level
         )
@@ -84,12 +117,27 @@ class DataBaseManager:
         )
 
         results = await self.db.execute(stmt)
-
         return results.scalars().all()
 
     async def create_event(
-        self, app_id: int, payload: EventCreationInput, ingest_key: str
-    ):
+        self,
+        app_id: int,
+        payload: EventCreationInput,
+        ingest_key: str,
+    ) -> Event | None:
+        """Create a new event after verifying ingest credentials.
+
+        Args:
+            app_id: Application identifier.
+            payload: Event payload.
+            ingest_key: Ingest key provided by the client.
+
+        Returns:
+            Created event ORM instance.
+
+        Raises:
+            IngestForbiddenError: If application does not exist or ingest key is invalid.
+        """
         stmt = select(Application).where(
             Application.id == app_id, Application.ingest_key == ingest_key
         )
@@ -105,7 +153,15 @@ class DataBaseManager:
         await self.db.refresh(event)
         return await self._read_by_id(Event, event.id)
 
-    async def create_application(self, app_name: str) -> Application:
+    async def create_application(self, app_name: str) -> Application | None:
+        """Create a new application with a generated ingest key.
+
+        Args:
+            app_name: Unique application name.
+
+        Returns:
+            Created application ORM instance.
+        """
         ingest_key = secrets.token_hex(16)
         app = Application(name=app_name, ingest_key=ingest_key)
         logger.info(f"Adding {app_name} application")
@@ -115,6 +171,11 @@ class DataBaseManager:
         return await self._read_by_id(Application, app.id)
 
     async def read_all_apps(self) -> list[Application]:
+        """Read all applications.
+
+        Returns:
+            List of application ORM instances.
+        """
         result = await self.db.execute(select(Application))
         return result.scalars().all()
 
@@ -126,6 +187,15 @@ class DataBaseManager:
         interval: TimeEnum,
         level: ErrorLevel | None,
     ):
+        """Return time-bucketed counts for an application.
+
+        Args:
+            app_id: Application identifier.
+            since: Lower bound for received time.
+            until: Upper bound for received time.
+            interval: Bucket size (e.g., hour/day).
+            level: Optional error level filter.
+        """
         where_conditions = self._create_event_where_condition(
             app_id, since, until, level
         )
@@ -152,6 +222,13 @@ class DataBaseManager:
         since: datetime,
         until: datetime,
     ):
+        """Return event counts grouped by severity level.
+
+        Args:
+            app_id: Application identifier.
+            since: Lower bound for received time.
+            until: Upper bound for received time.
+        """
         where_conditions = self._create_event_where_condition(
             app_id, since, until, level=None
         )
@@ -177,6 +254,15 @@ class DataBaseManager:
         limit: int,
         level: ErrorLevel | None,
     ):
+        """Return the most frequent messages with their counts and last seen time.
+
+        Args:
+            app_id: Application identifier.
+            since: Lower bound for received time.
+            until: Upper bound for received time.
+            limit: Maximum number of messages to return.
+            level: Optional error level filter.
+        """
         where_conditions = self._create_event_where_condition(
             app_id, since, until, level
         )

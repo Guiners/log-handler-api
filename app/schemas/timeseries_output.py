@@ -8,6 +8,8 @@ from app.constants import TimeEnum
 
 
 class Series(BaseModel):
+    """Single time bucket item for timeseries statistics."""
+
     bucket_start: datetime
     count: int
 
@@ -15,6 +17,8 @@ class Series(BaseModel):
 
 
 class TimeseriesOutput(BaseModel):
+    """Response schema for timeseries statistics."""
+
     interval: TimeEnum
     since: datetime
     until: datetime

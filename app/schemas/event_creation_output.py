@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 
 class EventCreationOutput(BaseModel):
+    """Response schema returned after successful event creation."""
+
     id: int
     application_id: int
     received_at: datetime

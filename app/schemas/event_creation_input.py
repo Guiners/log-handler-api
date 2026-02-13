@@ -9,6 +9,8 @@ from app.constants import ErrorLevel
 
 
 class EventCreationInput(BaseModel):
+    """Request schema for creating a new event."""
+
     occurred_at: datetime
     level: ErrorLevel
     message: str

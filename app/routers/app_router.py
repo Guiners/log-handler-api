@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from annotated_types import Gt, MinLen
-from fastapi import APIRouter, Depends, FastAPI, Request, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
@@ -13,6 +13,7 @@ from app.schemas.application_creation_response import ApplicationCreationRespons
 from app.schemas.application_read import ApplicationRead
 from app.schemas.error_response import ErrorResponse
 from app.services.db_menager import DataBaseManager
+
 
 app_router = APIRouter(prefix="/apps", tags=["Apps"])
 app_router.include_router(status_router)
@@ -26,8 +27,18 @@ app_router.include_router(event_router)
     status_code=status.HTTP_201_CREATED,
 )
 async def application_creation(
-    name: Annotated[str, MinLen(1)], db: AsyncSession = Depends(get_db)
-):
+    name: Annotated[str, MinLen(1)],
+    db: AsyncSession = Depends(get_db),
+) -> ApplicationCreationResponse | JSONResponse:
+    """Create a new application.
+
+    Args:
+        name: Unique application name.
+        db: Database session dependency.
+
+    Returns:
+        Created application data or conflict error response if name already exists.
+    """
     try:
         return await DataBaseManager(db).create_application(name)
 
@@ -47,8 +58,18 @@ async def application_creation(
     status_code=status.HTTP_200_OK,
 )
 async def read_single_application(
-    app_id: Annotated[int, Gt(0)], db: AsyncSession = Depends(get_db)
-):
+    app_id: Annotated[int, Gt(0)],
+    db: AsyncSession = Depends(get_db),
+) -> ApplicationRead | JSONResponse:
+    """Retrieve a single application by ID.
+
+    Args:
+        app_id: Application identifier.
+        db: Database session dependency.
+
+    Returns:
+        Application data or error response if application does not exist.
+    """
     try:
         return await DataBaseManager(db).read_app_by_id(app_id)
 
@@ -67,5 +88,15 @@ async def read_single_application(
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
 )
-async def read_all_applications(db: AsyncSession = Depends(get_db)):
+async def read_all_applications(
+    db: AsyncSession = Depends(get_db),
+) -> list[ApplicationRead]:
+    """Retrieve all registered applications.
+
+    Args:
+        db: Database session dependency.
+
+    Returns:
+        List of applications.
+    """
     return await DataBaseManager(db).read_all_apps()

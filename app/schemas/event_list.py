@@ -6,7 +6,9 @@ from app.schemas.event_read import EventRead
 
 
 class EventList(BaseModel):
-    items: list[EventRead]
+    """Paginated list of events."""
+
+    items: list["EventRead"]
     next_offset: int | None = None
 
     model_config = {"from_attributes": True}

@@ -3,26 +3,19 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from annotated_types import Ge, Gt, Le, Lt, MinLen
-from fastapi import APIRouter, Depends, FastAPI, Header, Request, status
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from annotated_types import Ge, Gt, Le
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from app.constants import ErrorLevel, TimeEnum
 from app.db.database import get_db
-from app.schemas.application_creation_response import ApplicationCreationResponse
-from app.schemas.application_read import ApplicationRead
 from app.schemas.by_level_output import ByLevelItem, ByLevelOutput
 from app.schemas.error_response import ErrorResponse
-from app.schemas.event_creation_input import EventCreationInput
-from app.schemas.event_creation_output import EventCreationOutput
-from app.schemas.event_list import EventList
-from app.schemas.event_read import EventRead
 from app.schemas.timeseries_output import Series, TimeseriesOutput
 from app.schemas.top_messages_output import TopMessageItem, TopMessagesOutput
 from app.services.db_menager import DataBaseManager
-from app.tools.custom_exceptions import IngestForbiddenError
+
 
 status_router = APIRouter(tags=["Status"])
 
@@ -40,7 +33,20 @@ async def get_timeseries(
     interval: TimeEnum = TimeEnum.HOUR,
     level: ErrorLevel | None = None,
     db: AsyncSession = Depends(get_db),
-):
+) -> TimeseriesOutput | JSONResponse:
+    """Return time-bucketed event counts for an application.
+
+    Args:
+        app_id: Application identifier.
+        since: Lower bound for received time.
+        until: Upper bound for received time.
+        interval: Bucket size (e.g., hour/day).
+        level: Optional error level filter.
+        db: Database session dependency.
+
+    Returns:
+        Timeseries response or validation error response when time range is invalid.
+    """
     if since >= until:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -72,7 +78,18 @@ async def get_by_level(
     since: datetime,
     until: datetime,
     db: AsyncSession = Depends(get_db),
-):
+) -> ByLevelOutput | JSONResponse:
+    """Return event counts grouped by severity level for an application.
+
+    Args:
+        app_id: Application identifier.
+        since: Lower bound for received time.
+        until: Upper bound for received time.
+        db: Database session dependency.
+
+    Returns:
+        By-level distribution or validation error response when time range is invalid.
+    """
     if since >= until:
         return JSONResponse(
             status_code=400,
@@ -102,7 +119,20 @@ async def get_top_messages(
     limit: Annotated[int, Ge(1), Le(100)] = 10,
     level: ErrorLevel | None = None,
     db: AsyncSession = Depends(get_db),
-):
+) -> TopMessagesOutput | JSONResponse:
+    """Return the most frequent event messages for an application.
+
+    Args:
+        app_id: Application identifier.
+        since: Lower bound for received time.
+        until: Upper bound for received time.
+        limit: Maximum number of messages to return.
+        level: Optional error level filter.
+        db: Database session dependency.
+
+    Returns:
+        Top messages response or validation error response when time range is invalid.
+    """
     if since >= until:
         return JSONResponse(
             status_code=400,
